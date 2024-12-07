@@ -1,0 +1,80 @@
+# Library Wifi Auto login for windows machines
+
+This proejct creates a service that runs on book and checks for new wifi connections.
+if the windows machine connects to a new network it checks the name of the network and
+if it matches the list of names of netowkrs that it has. it goes ahead and logs into the network by
+sending the correct REST API request to the captive portal.
+
+## Considerations
+
+1. The captive portal might be different for each network.
+2. The API request to login might be different for each network.
+3. The API request to check if the login was successful might be different for each network.
+4. We should use standard windows facilities and avoid complex orchestrations using pythoon
+   because that would require the user to have python installed.
+
+# Project architecture
+
+To build a **Library WiFi Auto Login** service for Windows machines, you can utilize various Windows APIs and PowerShell commands to listen for WiFi network change events and handle connections. Here are some relevant details and considerations:
+
+## Listening for WiFi Network Change Events
+
+Windows provides several ways to listen for network changes, primarily through **Windows Management Instrumentation (WMI)** and the **Windows API**. You can use PowerShell to access these functionalities.
+
+### Using PowerShell
+
+1. **Get-WmiObject**: This command allows you to monitor network adapters and their status.
+   ```powershell
+   Get-WmiObject -Class Win32_NetworkAdapter | Where-Object { $_.NetEnabled -eq $true }
+   ```
+
+2. **Registering for WMI Events**: You can register for WMI events that notify you when a network connection is established or changed.
+   ```powershell
+   $query = "SELECT * FROM __InstanceOperationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_NetworkConnection'"
+   $watcher = New-Object Management.ManagementEventWatcher $query
+   $watcher.EventArrived += {
+       # Handle the event
+       $network = $_.NewEvent.TargetInstance
+       Write-Host "Network changed: $($network.Name)"
+   }
+   $watcher.Start()
+   ```
+
+3. **Using `netsh` Command**: You can also use `netsh` commands in PowerShell to connect to Wi-Fi networks.
+   ```powershell
+   netsh wlan connect name="<Name of the Wi-Fi network>"
+   ```
+
+## Handling Captive Portals
+
+### Considerations for Captive Portals
+
+1. **Different Captive Portals**: Each network may have a unique captive portal that requires specific handling.
+2. **API Requests**: The API requests for logging in and checking login status may vary per network.
+
+### Example of Sending REST API Requests
+
+You can use PowerShell's `Invoke-RestMethod` to send API requests to the captive portal:
+```powershell
+$response = Invoke-RestMethod -Uri "<API_URL>" -Method Post -Body "<Body_Content>"
+```
+
+## Summary of Key Commands
+
+| Command/Functionality                 | Description                                     |
+|---------------------------------------|-------------------------------------------------|
+| `Get-WmiObject`                      | Retrieve information about network adapters     |
+| `New-Object ManagementEventWatcher`  | Monitor WMI events for network changes          |
+| `netsh wlan connect`                 | Connect to a specified Wi-Fi network            |
+| `Invoke-RestMethod`                  | Send REST API requests to captive portals       |
+
+This approach ensures that you utilize standard Windows facilities without requiring additional installations like Python, making it user-friendly for deployment in library environments.
+
+Citations:
+[1] https://www.hexnode.com/mobile-device-management/help/script-to-connect-to-wi-fi-on-windows-devices/
+[2] https://randomnerdtutorials.com/wifimanager-with-esp8266-autoconnect-custom-parameter-and-manage-your-ssid-and-password/
+[3] https://nathanlasnoski.com/2022/03/30/dump-wifi-passwords-using-powershell-on-windows-11-or-windows-10/
+[4] https://randomnerdtutorials.com/esp32-useful-wi-fi-functions-arduino/
+[5] https://stackoverflow.com/questions/78541411/windows-11-powershell-shows-my-network-adapter-as-false-even-though-its-enabled
+[6] https://www.reddit.com/r/AutomateUser/comments/s3op1t/need_help_how_to_automatically_login_to_wifi_that/
+[7] https://www.secureideas.com/blog/view-wireless-profile-password-information-using-powershell-or-cmd

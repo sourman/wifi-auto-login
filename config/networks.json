@@ -1,0 +1,21 @@
+{
+    "networks": [
+        {
+            "name": "LibraryWiFi",
+            "loginEndpoint": "https://library-wifi-portal.com/login",
+            "method": "POST",
+            "credentials": {
+                "username": "",
+                "password": ""
+            }
+        },
+        {
+            "name": "CampusNet",
+            "loginEndpoint": "https://campus-net-portal.edu/authenticate",
+            "method": "POST",
+            "credentials": {
+                "token": ""
+            }
+        }
+    ]
+} 
